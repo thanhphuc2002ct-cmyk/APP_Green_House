@@ -24,12 +24,14 @@ function safeJsonParse<T>(s: string): T | null {
 type DeviceKey = 'fan' | 'motor' | 'light';
 type Mode = 'AUTO' | 'MANUAL';
 
-type SensorPayload = {
+type SensorPayload = {   
   mq135_ppm?: number;
   soil1?: number;
   soil2?: number;
   light_percent?: number;
   uv_percent?: number;
+  dht_temperature?: number;
+  dht_humidity?: number; 
 };
 
 type EspStatePayload = {
@@ -78,8 +80,8 @@ export default function DashboardScreen() {
   const [alerts, setAlerts] = useState({
     uv: false,
     air: false,
-    humidity1: false,
-    humidity2: false,
+    soil: false,
+    temperature: 0,
   });
   
   // State để track mức độ cảnh báo không khí
@@ -136,8 +138,9 @@ export default function DashboardScreen() {
       console.log('[MQTT] error', err?.message ?? err);
     });
 
-    client.on('message', (topic, payload) => {
-      const data = safeJsonParse<Record<string, any>>(payload.toString());
+client.on('message', (topic, payload) => {
+      const fixedPayload = payload.toString().replace(/nan/g, 'null');
+      const data = safeJsonParse<Record<string, any>>(fixedPayload);
       if (!data) return;
 
       // Reset timer khi nhận được data từ ESP32 (sensor hoặc state)
@@ -172,21 +175,17 @@ export default function DashboardScreen() {
         } else if (alertType === 'uv_normal') {
           setAlerts((prev) => ({ ...prev, uv: false }));
         }
-        // Xử lý cảnh báo độ ẩm đất 1
-        else if 
         
-        
-        
-        (alertType === 'soil1_warning') {
-          setAlerts((prev) => ({ ...prev, humidity1: true }));
-        } else if (alertType === 'soil1_normal') {
-          setAlerts((prev) => ({ ...prev, humidity1: false }));
+        else if (alertType === 'soil1_warning' || alertType === 'soil2_warning') {
+          setAlerts((prev) => ({ ...prev, soil: 1 }));
+        } else if (alertType === 'soil1_normal' || alertType === 'soil2_normal') {
+          setAlerts((prev) => ({ ...prev, soil: 0 }));
         }
-        // Xử lý cảnh báo độ ẩm đất 2
-        else if (alertType === 'soil2_warning') {
-          setAlerts((prev) => ({ ...prev, humidity2: true }));
-        } else if (alertType === 'soil2_normal') {
-          setAlerts((prev) => ({ ...prev, humidity2: false }));
+        // Xử lý cảnh báo nhiệt độ
+        else if (alertType === 'temp_warning' || alertType === 'temp_danger') {
+          setAlerts((prev) => ({ ...prev, temperature: 1 }));
+        } else if (alertType === 'temp_normal') {
+          setAlerts((prev) => ({ ...prev, temperature: 0 }));
         }
         // Xử lý cảnh báo chất lượng không khí (danger và warning đều nhấp nháy)
         else if (alertType === 'air_danger') {
@@ -293,21 +292,21 @@ export default function DashboardScreen() {
         </View>
       </View>
 
-      <View style={styles.card}>
+<View style={styles.card}>
         <Text style={styles.cardTitle}>Cảm biến</Text>
         <View style={styles.grid}>
-          <Stat label="Không Khí(ppm)" value={sensors.mq135_ppm ?? '--'} isAlerting={alerts.air} />
-          <Stat label="Độ ẩm 1(%)" value={sensors.soil1 ?? '--'} isAlerting={alerts.humidity1} />
-          <Stat label="Độ ẩm 2(%)" value={sensors.soil2 ?? '--'} isAlerting={alerts.humidity2} />
+          <Stat label="Nhiệt độ (°C)" value={sensors.dht_temperature ?? '--'} isAlerting={!!alerts.temperature} />
+          <Stat label="Độ ẩm k.khí (%)" value={sensors.dht_humidity ?? '--'} />
+          
+          <Stat 
+            label="Độ ẩm đất (%)" 
+            value={(sensors.soil1 != null && sensors.soil2 != null) ? Math.round((sensors.soil1 + sensors.soil2) / 2) : (sensors.soil1 ?? sensors.soil2 ?? '--')} 
+            isAlerting={!!alerts.soil} 
+          />
+          
+          <Stat label="Không Khí(ppm)" value={sensors.mq135_ppm ?? '--'} isAlerting={!!alerts.air} />
           <Stat label="Độ sáng (%)" value={sensors.light_percent ?? '--'} />
-       {
-       
-       
-          <Stat label="Tia UV (%)" value={sensors.uv_percent ?? '--'} isAlerting={alerts.uv} />
-       
-       
-       
-       }
+          <Stat label="Tia UV (%)" value={sensors.uv_percent ?? '--'} isAlerting={!!alerts.uv} />
         </View>
       </View>
 
@@ -335,8 +334,8 @@ export default function DashboardScreen() {
         </View>
       </View>
 
-      {/* Khung cảnh báo - chỉ hiện khi có cảnh báo */}
-      {(alerts.uv || alerts.air || alerts.humidity1 || alerts.humidity2) ? (
+     <Stat label="Nhiệt độ (°C)" value={sensors.dht_temperature ?? '--'} isAlerting={!!alerts.temperature} />
+      {(alerts.uv || alerts.air || alerts.soil || alerts.temperature) ? ( 
         <View style={styles.alertCard}>
           <Text style={styles.alertCardTitle}>Cảnh báo</Text>
           <View style={styles.alertList}>
@@ -347,8 +346,6 @@ export default function DashboardScreen() {
                 <Text style={styles.alertItemText}>Cảnh báo nắng gắt</Text>
               </View>
             )}
-
-            }
             {alerts.air && (
               <View
                 style={[
@@ -368,16 +365,16 @@ export default function DashboardScreen() {
                 </Text>
               </View>
             )}
-            {alerts.humidity1 && (
+            {!!alerts.soil && (
               <View style={[styles.alertItem, styles.alertItemWarning]}>
                 <MaterialIcons name="warning" size={20} color="#FF9800" />
-                <Text style={styles.alertItemText}>Cảnh báo đất quá khô (Độ ẩm 1)</Text>
+                <Text style={styles.alertItemText}>Cảnh báo đất quá khô</Text>
               </View>
             )}
-            {alerts.humidity2 && (
-              <View style={[styles.alertItem, styles.alertItemWarning]}>
-                <MaterialIcons name="warning" size={20} color="#FF9800" />
-                <Text style={styles.alertItemText}>Cảnh báo đất quá khô (Độ ẩm 2)</Text>
+            {!!alerts.temperature && (
+              <View style={[styles.alertItem, styles.alertItemDanger]}>
+                <MaterialIcons name="warning" size={20} color="#FF3B30" />
+                <Text style={styles.alertItemText}>Cảnh báo: Nhiệt độ quá cao!</Text>
               </View>
             )}
           </View>
