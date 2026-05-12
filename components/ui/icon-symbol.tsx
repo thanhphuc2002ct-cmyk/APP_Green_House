@@ -20,6 +20,7 @@ const MAPPING = {
   'chevron.right': 'chevron-right',
   'waveform.path.ecg': 'space-dashboard',
   'gearshape.fill': 'settings',
+  'book.fill': 'menu-book',
 } as IconMapping;
 
 /**

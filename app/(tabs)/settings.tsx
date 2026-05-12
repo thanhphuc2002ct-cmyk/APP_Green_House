@@ -271,8 +271,8 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   logo: {
-    width: 40,
-    height: 40,
+    width: 25,
+    height: 25,
     borderRadius: 8,
   },
   header: {

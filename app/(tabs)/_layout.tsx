@@ -141,6 +141,19 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="guide"
+        options={{
+          title: 'Hướng dẫn',
+          tabBarIcon: ({ color }) => (
+            <IconSymbol 
+              size={26} 
+              name="book.fill" 
+              color={color} 
+            />
+          ),
+        }}
+      />
     </Tabs>
   );
 }
