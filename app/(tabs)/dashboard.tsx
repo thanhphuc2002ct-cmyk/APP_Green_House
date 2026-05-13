@@ -177,9 +177,9 @@ client.on('message', (topic, payload) => {
         }
         
         else if (alertType === 'soil1_warning' || alertType === 'soil2_warning') {
-          setAlerts((prev) => ({ ...prev, soil: 1 }));
+          setAlerts((prev) => ({ ...prev, soil: true }));
         } else if (alertType === 'soil1_normal' || alertType === 'soil2_normal') {
-          setAlerts((prev) => ({ ...prev, soil: 0 }));
+          setAlerts((prev) => ({ ...prev, soil: false }));
         }
         // Xử lý cảnh báo nhiệt độ
         else if (alertType === 'temp_warning' || alertType === 'temp_danger') {

@@ -22,6 +22,7 @@ type EspStatePayload = {
   threshold_air?: number;
   threshold_soil?: number;
   threshold_light?: number;
+  threshold_temp?: number;
   fan_auto_off?: number;
   motor_auto_off?: number;
   light_auto_off?: number;
@@ -50,6 +51,7 @@ export default function SettingsScreen() {
   const [thresholdAir, setThresholdAir] = useState('1000');
   const [thresholdSoil, setThresholdSoil] = useState('30');
   const [thresholdLight, setThresholdLight] = useState('10');
+  const [thresholdTemp, setThresholdTemp] = useState('35');
 
   const [fanAutoOff, setFanAutoOff] = useState('5');
   const [motorAutoOff, setMotorAutoOff] = useState('5');
@@ -92,6 +94,7 @@ export default function SettingsScreen() {
       if (typeof data.threshold_air === 'number') setThresholdAir(String(data.threshold_air));
       if (typeof data.threshold_soil === 'number') setThresholdSoil(String(data.threshold_soil));
       if (typeof data.threshold_light === 'number') setThresholdLight(String(data.threshold_light));
+      if (typeof data.threshold_temp === 'number') setThresholdTemp(String(data.threshold_temp));
 
       if (typeof data.fan_auto_off === 'number') setFanAutoOff(String(data.fan_auto_off));
       if (typeof data.motor_auto_off === 'number') setMotorAutoOff(String(data.motor_auto_off));
@@ -137,14 +140,15 @@ export default function SettingsScreen() {
     const air = Number(thresholdAir);
     const soil = Number(thresholdSoil);
     const light = Number(thresholdLight);
+    const temp = Number(thresholdTemp);
     const fanOff = Number(fanAutoOff);
     const motorOff = Number(motorAutoOff);
     const lightOff = Number(lightAutoOff);
 
-    if (!Number.isFinite(air) || !Number.isFinite(soil) || !Number.isFinite(light)) {
-      Alert.alert('Lỗi', 'Ngưỡng phải là số hợp lệ.');
-      return;
-    }
+  if (!Number.isFinite(air) || !Number.isFinite(soil) || !Number.isFinite(light) || !Number.isFinite(temp)) {
+    Alert.alert('Lỗi', 'Ngưỡng phải là số hợp lệ.');
+    return;
+  }
     if (!Number.isFinite(fanOff) || !Number.isFinite(motorOff) || !Number.isFinite(lightOff)) {
       Alert.alert('Lỗi', 'Auto-off phải là số hợp lệ.');
       return;
@@ -157,6 +161,7 @@ export default function SettingsScreen() {
       threshold_air: Math.trunc(air),
       threshold_soil: Math.trunc(soil),
       threshold_light: Math.trunc(light),
+      threshold_temp: Math.trunc(temp),
       fan_auto_off: Math.trunc(fanOff),
       motor_auto_off: Math.trunc(motorOff),
       light_auto_off: Math.trunc(lightOff),
@@ -174,6 +179,7 @@ export default function SettingsScreen() {
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Ngưỡng</Text>
+        <Field label="Nhiệt độ (°C)" value={thresholdTemp} onChange={setThresholdTemp} />
         <Field label="Không khí (ppm)" value={thresholdAir} onChange={setThresholdAir} />
         <Field label="Độ ẩm đất (%)" value={thresholdSoil} onChange={setThresholdSoil} />
         <Field label="Ánh sáng (%)" value={thresholdLight} onChange={setThresholdLight} />
@@ -293,7 +299,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     marginBottom: 10,
-    color: '#222',
+    color: '#222',  
   },
   hint: {
     marginTop: 6,
