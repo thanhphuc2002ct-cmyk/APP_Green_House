@@ -27,7 +27,7 @@ type Mode = 'AUTO' | 'MANUAL';
 type SensorPayload = {   
   mq135_ppm?: number;
   soil1?: number;
-  soil2?: number;
+  // soil2?: number;
   light_percent?: number;
   uv_percent?: number;
   dht_temperature?: number;
@@ -52,9 +52,9 @@ type AlertPayload = {
   air_quality?: number;
   mq135_ppm?: number;
   soil1?: number;
-  soil2?: number;
+  // soil2?: number;
   soil1_percent?: number;
-  soil2_percent?: number;
+  // soil2_percent?: number;
   threshold?: number;
   air_state?: string;
   threshold_warn?: number;
@@ -175,12 +175,20 @@ client.on('message', (topic, payload) => {
         } else if (alertType === 'uv_normal') {
           setAlerts((prev) => ({ ...prev, uv: false }));
         }
-        
-        else if (alertType === 'soil1_warning' || alertType === 'soil2_warning') {
+        // ******* Nhận MQTT từ esp32  mà có 2 độ ẩm đất *******//
+        // else if (alertType === 'soil1_warning' || alertType === 'soil2_warning') {
+        //   setAlerts((prev) => ({ ...prev, soil: true }));
+        // } else if (alertType === 'soil1_normal' || alertType === 'soil2_normal') {
+        //   setAlerts((prev) => ({ ...prev, soil: false }));
+        // }
+            // ******* Nhận MQTT từ esp32  mà chỉ có 1 độ ẩm đất *******//
+        else if (alertType === 'soil1_warning') {
           setAlerts((prev) => ({ ...prev, soil: true }));
-        } else if (alertType === 'soil1_normal' || alertType === 'soil2_normal') {
+        } else if (alertType === 'soil1_normal') {
           setAlerts((prev) => ({ ...prev, soil: false }));
         }
+
+
         // Xử lý cảnh báo nhiệt độ
         else if (alertType === 'temp_warning' || alertType === 'temp_danger') {
           setAlerts((prev) => ({ ...prev, temperature: 1 }));
@@ -298,12 +306,16 @@ client.on('message', (topic, payload) => {
           <Stat label="Nhiệt độ (°C)" value={sensors.dht_temperature ?? '--'} isAlerting={!!alerts.temperature} />
           <Stat label="Độ ẩm k.khí (%)" value={sensors.dht_humidity ?? '--'} />
           
-          <Stat 
+          {/* <Stat 
             label="Độ ẩm đất (%)" 
             value={(sensors.soil1 != null && sensors.soil2 != null) ? Math.round((sensors.soil1 + sensors.soil2) / 2) : (sensors.soil1 ?? sensors.soil2 ?? '--')} 
             isAlerting={!!alerts.soil} 
+          /> */}
+          <Stat 
+            label="Độ ẩm đất (%)" 
+            value={sensors.soil1 ?? '--'} 
+            isAlerting={!!alerts.soil} 
           />
-          
           <Stat label="Không Khí(ppm)" value={sensors.mq135_ppm ?? '--'} isAlerting={!!alerts.air} />
           <Stat label="Độ sáng (%)" value={sensors.light_percent ?? '--'} />
           <Stat label="Tia UV (%)" value={sensors.uv_percent ?? '--'} isAlerting={!!alerts.uv} />
@@ -334,7 +346,7 @@ client.on('message', (topic, payload) => {
         </View>
       </View>
 
-     <Stat label="Nhiệt độ (°C)" value={sensors.dht_temperature ?? '--'} isAlerting={!!alerts.temperature} />
+    
       {(alerts.uv || alerts.air || alerts.soil || alerts.temperature) ? ( 
         <View style={styles.alertCard}>
           <Text style={styles.alertCardTitle}>Cảnh báo</Text>
