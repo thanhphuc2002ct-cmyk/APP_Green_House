@@ -90,14 +90,19 @@ export default function DashboardScreen() {
   const clientId = useMemo(() => `dash_${Math.random().toString(16).slice(2)}_${Date.now()}`, []);
 
   const connectMqtt = () => {
-    // Nếu đã connected nhưng mất data, reset và đợi data mới
-    if (clientRef.current?.connected && !hasData) {
-      setHasData(false);
-      lastDataTimeRef.current = Date.now();
-      startDataTimeout();
-      return;
+    // // Nếu đã connected nhưng mất data, reset và đợi data mới
+    // if (clientRef.current?.connected && !hasData) {
+    //   setHasData(false);
+    //   lastDataTimeRef.current = Date.now();
+    //   startDataTimeout();
+    //   return;
+    // }
+    // if (clientRef.current?.connected) return;
+
+    if (clientRef.current) {
+      clientRef.current.end(true);
+      clientRef.current = null;
     }
-    if (clientRef.current?.connected) return;
 
     const url = `${MQTT_USE_SSL ? 'wss' : 'ws'}://${MQTT_HOST}:${MQTT_PORT}/mqtt`;
     const client = mqtt.connect(url, {
@@ -304,7 +309,7 @@ client.on('message', (topic, payload) => {
         <Text style={styles.cardTitle}>Cảm biến</Text>
         <View style={styles.grid}>
           <Stat label="Nhiệt độ (°C)" value={sensors.dht_temperature ?? '--'} isAlerting={!!alerts.temperature} />
-          <Stat label="Độ ẩm k.khí (%)" value={sensors.dht_humidity ?? '--'} />
+          <Stat label="Độ ẩm k.khí (%)" value={typeof sensors.dht_humidity === 'number' ? sensors.dht_humidity.toFixed(1) : '--'} />
           
           {/* <Stat 
             label="Độ ẩm đất (%)" 
